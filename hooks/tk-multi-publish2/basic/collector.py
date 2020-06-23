@@ -14,6 +14,12 @@ import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
 
+import sys
+sys.path.append("/home/jlehrman/workspace/conductor_client")
+sys.path.append("/usr/lib64/python2.7/site-packages")
+import conductor.lib
+
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -96,7 +102,7 @@ class MayaSessionCollector(HookBaseClass):
             )
 
             self.collect_playblasts(item, project_root)
-            self.collect_alembic_caches(item, project_root)
+            #self.collect_alembic_caches(item, project_root)
         else:
 
             self.logger.info(
@@ -112,6 +118,27 @@ class MayaSessionCollector(HookBaseClass):
 
         if cmds.ls(geometry=True, noIntermediate=True):
             self._collect_session_geometry(item)
+            
+        # Collect Conductor dependencies
+        import conductor
+        import conductor.lib
+        import conductor.lib.common
+        import conductor.lib.maya_utils
+        reload(conductor)
+        reload(conductor.lib)
+        reload(conductor.lib.common)
+        
+        resources = conductor.lib.common.load_resources_file()
+        dependency_attrs = resources.get("maya_dependency_attrs") or {}
+        
+        deps = conductor.lib.maya_utils.collect_dependencies(dependency_attrs)
+        scene_path = cmds.file(query=True, sn=True)
+        print deps
+        
+        for dep in deps:
+            if dep and dep != scene_path:
+                print "---------Adding item: ", dep
+                super(MayaSessionCollector, self)._collect_file(item, dep)
 
     def collect_current_maya_session(self, settings, parent_item):
         """
