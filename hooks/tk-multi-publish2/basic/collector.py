@@ -169,6 +169,8 @@ class MayaSessionCollector(HookBaseClass):
         # get the icon path to display for this item
         icon_path = os.path.join(self.disk_location, os.pardir, "icons", "maya.png")
         session_item.set_icon_from_path(icon_path)
+        
+        session_item.properties['publish_fields'] = {'sg_category': 'main'}
 
         # discover the project root which helps in discovery of other
         # publishable items
